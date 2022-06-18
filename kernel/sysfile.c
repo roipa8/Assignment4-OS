@@ -484,3 +484,37 @@ sys_pipe(void)
   }
   return 0;
 }
+
+uint64
+sys_symlink(void)
+{
+  char old[MAXPATH], new[MAXPATH];
+
+  if(argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
+    return -1;
+  begin_op();
+  struct inode *ip;
+  if (ip = create(new, T_SOFT, 0, 0) == 0) {
+    end_op();
+    return -1;
+  }
+  int len = strlen(old);
+  writei(ip, 0, (uint64)&len, 0, sizeof(4));
+  writei(ip, 0, (uint64)old, sizeof(int), len+1);
+  iupdate(ip);
+  iunlockput(ip);
+  end_op();
+  return 0;
+}
+
+uint64
+sys_readlink(void)
+{
+  int size;
+  if(argint(2, &size) < 0)
+    return -1;
+  char name[MAXPATH], buf[size];
+  if(argstr(0, name, MAXPATH) < 0 || argstr(1, buf, MAXPATH) < 0)
+    return -1;
+  return readlink(name, buf, size);
+}
