@@ -431,8 +431,8 @@ void
 itrunc(struct inode *ip)
 {
   int i, j;
-  struct buf *bp;
-  uint *a;
+  struct buf *bp, *bp_sub;
+  uint *a, *a_sub;
 
   for(i = 0; i < NDIRECT; i++){
     if(ip->addrs[i]){
@@ -453,6 +453,26 @@ itrunc(struct inode *ip)
     ip->addrs[NDIRECT] = 0;
   }
 
+  if (ip->addrs[NDIRECT+1]) {
+    bp = bread(ip->dev, ip->addrs[NDIRECT]);
+    a = (uint*)bp->data;
+    for (i = 0; i < NINDIRECT; i++) {
+      if (a[i]) {
+        bp_sub = bread(ip->dev, a[i]);
+        a_sub = (uint*)bp_sub->data;
+        for(j = 0; j < NINDIRECT; j++){
+          if(a_sub[j])
+            bfree(ip->dev, a_sub[j]);
+        }
+        brelse(bp_sub);
+        bfree(ip->dev, a[i]);
+        a[i] = 0;
+      }
+    }
+    brelse(bp);
+    bfree(ip->dev, ip->addrs[NDIRECT+1]);
+  }
+  
   ip->size = 0;
   iupdate(ip);
 }

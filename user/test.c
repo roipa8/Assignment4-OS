@@ -9,13 +9,24 @@
 #include "kernel/riscv.h"
 
 int main(){
-    int fd = open("copyin1.txt", O_WRONLY | O_CREATE);
+    int fd = open("test.txt", O_RDWR | O_CREATE);
     if(fd < 0){
-      printf("open(copyin1) failed\n");
+      printf("open failed\n");
       exit(1);
     }
-    char c = 'a';
-    write(fd, &c, 1);
+    char buf1[1024];
+    memset(buf1, 'h', sizeof(buf1));
+    for (int i = 0; i < 12; i++)
+      write(fd, buf1, sizeof(buf1));
+    printf("Finished writing 12KB (direct)\n");
+    for (int i = 0; i < 256; i++)
+      write(fd, buf1, sizeof(buf1));
+    printf("Finished writing 268KB (single indirect)\n");
+    char* buf = malloc(9972*1024);
+    memset(buf1, 'h', 9972*1024);
+    write(fd, buf, 9972*1024);
+    printf("Finished writing 10MB\n");
+    
     close(fd);
     exit(0);
 }
