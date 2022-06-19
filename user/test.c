@@ -37,7 +37,7 @@ int main(){
     if(symlink("/cat1234","/new_cat") < 0)
       exit(1);
     char data[128];
-    if(readlink("/new_cat", data, 128))
+    if(readlink("/new_cat", data, 128) < 0)
       exit(1);
     printf("%d\n", strlen(data));
     exit(0);
