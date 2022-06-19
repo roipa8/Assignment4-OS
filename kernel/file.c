@@ -179,18 +179,3 @@ filewrite(struct file *f, uint64 addr, int n)
 
   return ret;
 }
-
-int
-symlink(const char* oldpath, const char* newpath)
-{
-  return -1;
-}
-
-int
-readlink(const char* pathname, char* buf, int bufsize)
-{
-  begin_op();
-
-  end_op();
-  return -1;
-}

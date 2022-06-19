@@ -489,17 +489,16 @@ uint64
 sys_symlink(void)
 {
   char old[MAXPATH], new[MAXPATH];
-
   if(argstr(0, old, MAXPATH) < 0 || argstr(1, new, MAXPATH) < 0)
     return -1;
   begin_op();
   struct inode *ip;
-  if (ip = create(new, T_SOFT, 0, 0) == 0) {
+  if ((ip = create(new, T_SOFT, 0, 0)) == 0) {
     end_op();
     return -1;
   }
   int len = strlen(old);
-  writei(ip, 0, (uint64)&len, 0, sizeof(4));
+  writei(ip, 0, (uint64)&len, 0, sizeof(int));
   writei(ip, 0, (uint64)old, sizeof(int), len+1);
   iupdate(ip);
   iunlockput(ip);
@@ -511,10 +510,29 @@ uint64
 sys_readlink(void)
 {
   int size;
+  struct inode* ip;
   if(argint(2, &size) < 0)
     return -1;
   char name[MAXPATH], buf[size];
-  if(argstr(0, name, MAXPATH) < 0 || argstr(1, buf, MAXPATH) < 0)
+  if(argstr(0, name, MAXPATH) < 0 || argstr(1, buf, size) < 0)
     return -1;
-  return readlink(name, buf, size);
+  begin_op();
+  if((ip = namei(name)) == 0){
+    end_op();
+    return -1;
+  }
+  if(ip->type!=T_SOFT){
+    end_op();
+    return -1;
+  }
+  int len;
+  readi(ip, 0, (uint64)&len, 0, sizeof(int));
+  if(size < len){
+    end_op();
+    return -1;
+  }
+  readi(ip, 0, (uint64)&buf, sizeof(int), len);
+  buf[len]='\0';
+  printf("%s\n", buf);
+  return 0;
 }
