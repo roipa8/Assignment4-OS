@@ -39,6 +39,6 @@ int main(){
     char data[128];
     if(readlink("/new_cat", data, 128) < 0)
       exit(1);
-    printf("%d\n", strlen(data));
+    printf("%s\n", data);
     exit(0);
 }

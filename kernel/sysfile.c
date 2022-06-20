@@ -511,10 +511,9 @@ sys_readlink(void)
 {
   int size;
   struct inode* ip;
-  if(argint(2, &size) < 0)
-    return -1;
-  char name[MAXPATH], buf[size];
-  if(argstr(0, name, MAXPATH) < 0 || argstr(1, buf, size) < 0)
+  uint64 buf;
+  char name[MAXPATH];
+  if(argstr(0, name, MAXPATH) < 0 || argaddr(1, &buf) < 0 || argint(2, &size) < 0)
     return -1;
   begin_op();
   if((ip = namei(name)) == 0){
@@ -531,8 +530,7 @@ sys_readlink(void)
     end_op();
     return -1;
   }
-  readi(ip, 0, (uint64)&buf, sizeof(int), len);
-  buf[len]='\0';
-  printf("%s\n", buf);
+  readi(ip, 1, buf, sizeof(int), len+1);
+  end_op();
   return 0;
 }
