@@ -288,8 +288,6 @@ create(char *path, short type, short major, short minor)
 uint64
 sys_open(void)
 {
-      printf("A\n");
-
   char path[MAXPATH];
   int fd, omode;
   struct file *f;
@@ -338,11 +336,9 @@ sys_open(void)
         return -1;
       }
       readi(ip, 0, (uint64)&path, sizeof(int), len+1);
-      printf("%s\n",path);
       iunlockput(ip);
       if((ip = namei(path)) == 0){
         end_op();
-        printf("+++++++++++++\n");
         return -1;
       }
       ilock(ip);

@@ -575,7 +575,6 @@ dirlookup(struct inode *dp, char *name, uint *poff)
 {
   uint off, inum;
   struct dirent de;
-
   if(dp->type != T_DIR)
     panic("dirlookup not DIR");
 
@@ -645,7 +644,6 @@ skipelem(char *path, char *name)
 {
   char *s;
   int len;
-
   while(*path == '/')
     path++;
   if(*path == 0)

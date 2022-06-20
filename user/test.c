@@ -35,29 +35,34 @@ int main(){
     
     
     
-    int fd = open("/test.txt", O_RDWR | O_CREATE);
+    int fd = open("test.txt", O_RDWR | O_CREATE);
+    char buf1[128];
+    char buf2[128];
+    buf1[0] = 'a';
+    buf1[1] = 'b';
+    buf1[2] = 'c';
     if(fd < 0){
       printf("open failed\n");
       exit(1);
     }
-    printf("%d\n", fd);
+    write(fd, buf1, 3);
     close(fd);
-
-    if(symlink("/text.txt","/1") < 0)
+    if(symlink("test.txt","1") < 0)
       exit(1);
-    if(symlink("/1","/2") < 0)
+    if(symlink("1","2") < 0)
       exit(1);
-    if(symlink("/2","/3") < 0)
+    if(symlink("2","3") < 0)
       exit(1);
     // char data[128];
     // if(readlink("/new_cat", data, 128) < 0)
     //   exit(1);
-    fd = open("/3",O_RDWR);
+    fd = open("3",O_RDWR);
     if(fd < 0){
       printf("open failed\n");
       exit(1);
     }
-    printf("%s\n", fd);
+    read(fd, buf2, 3);
+    printf("%s\n", buf2);
     close(fd);
     exit(0);
 }
