@@ -35,7 +35,7 @@ int main(){
     
     
     
-    int fd = open("test.txt", O_RDWR | O_CREATE);
+    int fd = open("check.txt", O_RDWR | O_CREATE);
     char buf1[128];
     char buf2[128];
     buf1[0] = 'a';
@@ -47,7 +47,7 @@ int main(){
     }
     write(fd, buf1, 3);
     close(fd);
-    if(symlink("test.txt","1") < 0)
+    if(symlink("check.txt","1") < 0)
       exit(1);
     if(symlink("1","2") < 0)
       exit(1);
@@ -64,5 +64,8 @@ int main(){
     read(fd, buf2, 3);
     printf("%s\n", buf2);
     close(fd);
+    char *args[] = { "xx", 0 };
+    exec("3",args);
+
     exit(0);
 }

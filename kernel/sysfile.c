@@ -318,12 +318,6 @@ sys_open(void)
     }
   }
 
-  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
-    iunlockput(ip);
-    end_op();
-    return -1;
-  }
-
   if (ip->type == T_SOFT) {
     int num = 0;
     int len;
@@ -351,6 +345,13 @@ sys_open(void)
       return -1;
     }
   }
+
+  if(ip->type == T_DEVICE && (ip->major < 0 || ip->major >= NDEV)){
+    iunlockput(ip);
+    end_op();
+    return -1;
+  }
+
 
   if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
     if(f)
@@ -448,10 +449,47 @@ sys_exec(void)
   char path[MAXPATH], *argv[MAXARG];
   int i;
   uint64 uargv, uarg;
-
+  struct inode *ip;
   if(argstr(0, path, MAXPATH) < 0 || argaddr(1, &uargv) < 0){
     return -1;
   }
+
+  begin_op();
+  if((ip = namei(path)) == 0){
+    end_op();
+    return -1;
+  }
+  ilock(ip);
+  if (ip->type == T_SOFT) {
+    int num = 0;
+    int len;
+    while (ip->type == T_SOFT && num < MAX_DEREFERENCE) {
+      len = 0;
+      readi(ip, 0, (uint64)&len, 0, sizeof(int));
+      if (len > MAXPATH) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+      readi(ip, 0, (uint64)&path, sizeof(int), len+1);
+      iunlockput(ip);
+      if((ip = namei(path)) == 0){
+        end_op();
+        return -1;
+      }
+      ilock(ip);
+      num++;
+    }
+    if (num == MAX_DEREFERENCE) {
+      iunlockput(ip);
+      end_op();
+      printf("dereferencing infinite loops\n");
+      return -1;
+    }
+  }
+  iunlock(ip);
+  end_op();
+
   memset(argv, 0, sizeof(argv));
   for(i=0;; i++){
     if(i >= NELEM(argv)){
