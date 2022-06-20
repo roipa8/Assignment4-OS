@@ -16,6 +16,8 @@
 #include "file.h"
 #include "fcntl.h"
 
+#define MAX_DEREFERENCE 31
+
 // Fetch the nth word-sized system call argument as a file descriptor
 // and return both the descriptor and the corresponding struct file.
 static int
@@ -286,6 +288,8 @@ create(char *path, short type, short major, short minor)
 uint64
 sys_open(void)
 {
+      printf("A\n");
+
   char path[MAXPATH];
   int fd, omode;
   struct file *f;
@@ -320,6 +324,36 @@ sys_open(void)
     iunlockput(ip);
     end_op();
     return -1;
+  }
+
+  if (ip->type == T_SOFT) {
+    int num = 0;
+    int len;
+    while (ip->type == T_SOFT && num < MAX_DEREFERENCE) {
+      len = 0;
+      readi(ip, 0, (uint64)&len, 0, sizeof(int));
+      if (len > MAXPATH) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+      readi(ip, 0, (uint64)&path, sizeof(int), len+1);
+      printf("%s\n",path);
+      iunlockput(ip);
+      if((ip = namei(path)) == 0){
+        end_op();
+        printf("+++++++++++++\n");
+        return -1;
+      }
+      ilock(ip);
+      num++;
+    }
+    if (num == MAX_DEREFERENCE) {
+      iunlockput(ip);
+      end_op();
+      printf("dereferencing infinite loops\n");
+      return -1;
+    }
   }
 
   if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){

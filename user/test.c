@@ -33,12 +33,31 @@ int main(){
     // write(fd, buf, 9972*1024);
     // printf("Finished writing 10MB\n");
     
-    // close(fd);
-    if(symlink("/cat1234","/new_cat") < 0)
+    
+    
+    int fd = open("/test.txt", O_RDWR | O_CREATE);
+    if(fd < 0){
+      printf("open failed\n");
       exit(1);
-    char data[128];
-    if(readlink("/new_cat", data, 128) < 0)
+    }
+    printf("%d\n", fd);
+    close(fd);
+
+    if(symlink("/text.txt","/1") < 0)
       exit(1);
-    printf("%s\n", data);
+    if(symlink("/1","/2") < 0)
+      exit(1);
+    if(symlink("/2","/3") < 0)
+      exit(1);
+    // char data[128];
+    // if(readlink("/new_cat", data, 128) < 0)
+    //   exit(1);
+    fd = open("/3",O_RDWR);
+    if(fd < 0){
+      printf("open failed\n");
+      exit(1);
+    }
+    printf("%s\n", fd);
+    close(fd);
     exit(0);
 }
