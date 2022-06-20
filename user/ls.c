@@ -29,8 +29,8 @@ ls(char *path)
   int fd;
   struct dirent de;
   struct stat st;
-
-  if((fd = open(path, 0)) < 0){
+  char soft_buf[512];
+  if((fd = open(path, 0x100)) < 0){
     fprintf(2, "ls: cannot open %s\n", path);
     return;
   }
@@ -45,7 +45,15 @@ ls(char *path)
   case T_FILE:
     printf("%s %d %d %l\n", fmtname(path), st.type, st.ino, st.size);
     break;
-
+  case T_SOFT:
+    if (readlink(path, soft_buf, 512) < 0)
+      printf("ls: cannot stat %s\n", path);
+    path[strlen(path)] = '-';
+    path[strlen(path)] = '>';
+    memmove(path+strlen(path), soft_buf, strlen(soft_buf));
+    path[strlen(path)] = '\0';
+    printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+    break;
   case T_DIR:
     if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
       printf("ls: path too long\n");
@@ -63,7 +71,19 @@ ls(char *path)
         printf("ls: cannot stat %s\n", buf);
         continue;
       }
-      printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+      if (st.type == T_SOFT) {
+        if (readlink(buf, soft_buf, 512) < 0) {
+          printf("ls: cannot stat %s\n", buf);
+          continue;
+        }
+        buf[strlen(buf)] = '-';
+        buf[strlen(buf)] = '>';
+        memmove(buf+strlen(buf), soft_buf, strlen(soft_buf));
+        buf[strlen(buf)] = '\0';
+        printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+        memset(soft_buf, 0, 512);
+      }
+      else printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
     }
     break;
   }

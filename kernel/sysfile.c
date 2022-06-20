@@ -262,7 +262,6 @@ create(char *path, short type, short major, short minor)
 
   if((ip = ialloc(dp->dev, type)) == 0)
     panic("create: ialloc");
-
   ilock(ip);
   ip->major = major;
   ip->minor = minor;
@@ -311,14 +310,14 @@ sys_open(void)
       return -1;
     }
     ilock(ip);
-    if(ip->type == T_DIR && omode != O_RDONLY){
+    if(ip->type == T_DIR && omode != O_RDONLY && omode!=O_NOFOLLOW){
       iunlockput(ip);
       end_op();
       return -1;
     }
   }
 
-  if (ip->type == T_SOFT) {
+  if (ip->type == T_SOFT && !(omode & O_NOFOLLOW)) {
     int num = 0;
     int len;
     while (ip->type == T_SOFT && num < MAX_DEREFERENCE) {
