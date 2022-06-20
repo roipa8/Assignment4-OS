@@ -431,7 +431,33 @@ sys_chdir(void)
     return -1;
   }
   ilock(ip);
-  
+  if (ip->type == T_SOFT) {
+    int num = 0;
+    int len;
+    while (ip->type == T_SOFT && num < MAX_DEREFERENCE) {
+      len = 0;
+      readi(ip, 0, (uint64)&len, 0, sizeof(int));
+      if (len > MAXPATH) {
+        iunlockput(ip);
+        end_op();
+        return -1;
+      }
+      readi(ip, 0, (uint64)&path, sizeof(int), len+1);
+      iunlockput(ip);
+      if((ip = namei(path)) == 0){
+        end_op();
+        return -1;
+      }
+      ilock(ip);
+      num++;
+    }
+    if (num == MAX_DEREFERENCE) {
+      iunlockput(ip);
+      end_op();
+      printf("dereferencing infinite loops\n");
+      return -1;
+    }
+  }
 
   if(ip->type != T_DIR){
     iunlockput(ip);
