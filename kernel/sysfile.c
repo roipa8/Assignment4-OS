@@ -431,6 +431,8 @@ sys_chdir(void)
     return -1;
   }
   ilock(ip);
+  
+
   if(ip->type != T_DIR){
     iunlockput(ip);
     end_op();
