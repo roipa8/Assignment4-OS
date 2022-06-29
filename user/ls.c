@@ -22,6 +22,28 @@ fmtname(char *path)
   return buf;
 }
 
+char*
+fmtname_soft(char *path)
+{
+  static char buf[DIRSIZ+1];
+  char *p;
+
+  for(p=path+strlen(path); p >= path && *p != '>'; p--)
+    ;
+
+  // Find first character after last slash.
+  while (p >= path && *p!='/')
+    p--;
+  p++;
+
+  // Return blank-padded name.
+  if(strlen(p) >= DIRSIZ)
+    return p;
+  memmove(buf, p, strlen(p));
+  memset(buf+strlen(p), ' ', DIRSIZ-strlen(p));
+  return buf;
+}
+
 void
 ls(char *path)
 {
@@ -52,7 +74,7 @@ ls(char *path)
     path[strlen(path)] = '>';
     memmove(path+strlen(path), soft_buf, strlen(soft_buf));
     path[strlen(path)] = '\0';
-    printf("%s %d %d %d\n", fmtname(path), st.type, st.ino, st.size);
+    printf("%s %d %d %d\n", fmtname_soft(path), st.type, st.ino, st.size);
     break;
   case T_DIR:
     if(strlen(path) + 1 + DIRSIZ + 1 > sizeof buf){
@@ -80,7 +102,7 @@ ls(char *path)
         buf[strlen(buf)] = '>';
         memmove(buf+strlen(buf), soft_buf, strlen(soft_buf));
         buf[strlen(buf)] = '\0';
-        printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
+        printf("%s %d %d %d\n", fmtname_soft(buf), st.type, st.ino, st.size);
         memset(soft_buf, 0, 512);
       }
       else printf("%s %d %d %d\n", fmtname(buf), st.type, st.ino, st.size);
